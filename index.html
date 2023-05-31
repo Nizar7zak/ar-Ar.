@@ -1,48 +1,90 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="./aframe-1.4.2/dist/aframe-master.min.js"></script>
-    <script src="./AR.js-3.4.5/aframe/build/aframe-ar.js"></script>
-    <title>Document</title>
+  <meta charset="utf-8">
+  <title>WebXRManager Example</title>
+  <style>
+    body { margin: 0; }
+    canvas { display: block; }
+  </style>
 </head>
+<body>
+  <script src="https://threejs.org/build/three.js"></script>
+  <script>
+    // Create a Three.js scene, camera, and renderer
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
 
-<body style="margin: 0px; overflow: hidden;">
+    // Enable XR mode
+    renderer.xr.enabled = true;
 
-    <a-scene
-        vr-mode-ui="enabled: false;"
-        renderer="logarithmicDepthBuffer: true;"
-        embedded
-        arjs="trackingMethod: best; sourceType: webcam;debugUIEnabled: false;"
-    >
+    // Access the WebXRManager instance
+    const xrManager = renderer.xr;
 
-        <a-marker
-            id="marker"
-            markerhandler
-            emitevents="true"
-            preset="hiro"
-            size="0.1"
-            smooth="true"
-            smoothCount="10"
-            smoothTolerance="0.01"
-            smoothThreshold="5"
-        >
-            <a-entity
-                gltf-model="./couples_music_box/scene.gltf"
-                scale="15 15 15"
-                position="0 0 0"
-                
-            >    
-            </a-entity>
-            
-        </a-marker>
-        <a-entity camera></a-entity>
+    // Add a cube to the scene
+    const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+    const cubeMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+    scene.add(cube);
 
-    </a-scene>
+    // Start the animation loop
+    function animate() {
+      renderer.setAnimationLoop(render);
+    }
 
+    // Render function
+    function render() {
+      cube.rotation.x += 0.01;
+      cube.rotation.y += 0.01;
+      renderer.render(scene, camera);
+    }
+
+    // Handle XR session start event
+    xrManager.addEventListener('sessionstart', () => {
+      // Get the XR session
+      const session = xrManager.getSession();
+
+      // Set the reference space type to viewer
+      xrManager.setReferenceSpaceType('viewer');
+
+      // Get the XR session's viewer pose and update the camera position and orientation accordingly
+      session.requestAnimationFrame(() => {
+        const pose = session.requestAnimationFrame((time, frame) => {
+          const viewerPose = frame.getViewerPose();
+          if (viewerPose) {
+            const transform = viewerPose.transform;
+            camera.position.copy(transform.position);
+            camera.quaternion.copy(transform.orientation);
+          }
+        });
+      });
+
+      // Start the animation loop
+      animate();
+    });
+
+    // Request an XR session when the user clicks on the screen
+    renderer.domElement.addEventListener('click', () => {
+      xrManager.getSession().then((session) => {
+        session.requestReferenceSpace('viewer').then(() => {
+          session.requestAnimationFrame(() => {
+            session.end();
+          });
+        });
+      }).catch((error) => {
+        console.log('Failed to start XR session:', error);
+      });
+    });
+
+    // Resize the renderer and update the camera aspect ratio when the window is resized
+    window.addEventListener('resize', () => {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+    });
+  </script>
 </body>
-
 </html>
