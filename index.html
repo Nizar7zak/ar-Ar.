@@ -13,18 +13,20 @@
 <body style="margin: 0px; overflow: hidden;">
 
     <a-scene
-        vr-mode-ui="enabled: false"
-        renderer="logarithmicDepthBuffer: true"
+        vr-mode-ui="enabled: false;"
+        renderer="logarithmicDepthBuffer: true;"
         embedded
-        arjs="'trackingMethod: best; sourceType: webcam; debugUIEnabled: false"
+        arjs="trackingMethod: best; sourceType: webcam;debugUIEnabled: false;"
     >
 
-        <a-marker
-            type="pattern"
-            url="./pattern-mChar.png"
-           
+        <a-nft
+            type="nft"
+            url="pattern-mChar"
+            smooth="true"
+            smoothCount="10"
+            smoothTolerance=".01"
+            smoothThreshold="5"
         >
-
             <a-entity
                 id="box1"
                 geometry="primitive: box"
